@@ -110,7 +110,7 @@ class _UploadState extends State<Upload> {
       "description": description,
       "location": location,
       "timestamp": timestamp,
-      "likes": [],
+      "likes": {},
     });
   }
 

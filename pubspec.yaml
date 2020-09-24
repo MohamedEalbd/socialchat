@@ -30,7 +30,7 @@ dependencies:
   geolocator: ^5.2.0
   uuid: ^2.0.0
   image: ^2.0.7
-  animator: 0.1.4
+  animator: ^2.0.1
   path_provider: ^1.6.14
   firebase_messaging: ^7.0.0
   timeago: ^2.0.27

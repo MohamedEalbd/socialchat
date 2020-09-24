@@ -202,7 +202,7 @@ class _ProfileState extends State<Profile> {
       );
     } else if (postView == "list") {
       return Column(
-        children: posts
+          children: posts
       );
     }
   }
