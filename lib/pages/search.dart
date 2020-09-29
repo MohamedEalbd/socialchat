@@ -8,6 +8,8 @@ import 'package:social_chat/pages/home.dart';
 import 'package:social_chat/widgets/header.dart';
 import 'package:social_chat/widgets/progress.dart';
 
+import 'profile.dart';
+
 class Search extends StatefulWidget {
   @override
   _SearchState createState() => _SearchState();
@@ -114,7 +116,9 @@ class UserResult extends StatelessWidget {
   final User user;
 
   UserResult({this.user});
-
+  showProfile(context,{profileId}){
+    Navigator.push(context, MaterialPageRoute(builder: (_)=> Profile(profileId: profileId,)));
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -122,7 +126,7 @@ class UserResult extends StatelessWidget {
         child: Column(
           children: [
             GestureDetector(
-              onTap: () {},
+              onTap: () => showProfile(context,profileId: user.id),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey,

@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_chat/model/user.dart';
+import 'package:social_chat/pages/comment.dart';
 import 'package:social_chat/pages/home.dart';
 import 'package:social_chat/widgets/progress.dart';
 
@@ -73,7 +74,7 @@ class _PostState extends State<Post> {
   final String mediaUrl;
   Map likes;
   int postCount;
-  bool isLiked = false;
+  bool isLiked ;
   bool showHeart = false;
 
   _PostState(
@@ -86,6 +87,26 @@ class _PostState extends State<Post> {
       this.likes,
       this.postCount});
 
+  addLikeToActivityFeed() {
+    feedRef.doc(ownerId).collection("feedItems").doc(postId).set({
+      'type': 'like',
+      'username': currentUSer.username,
+      'userId': currentUSer.id,
+      'userProfileImg': currentUSer.photoUrl,
+      'postId': postId,
+      'mediaUrl': mediaUrl,
+      'timestamp': timestamp,
+    });
+  }
+
+  removeLikeFromActivity() {
+    feedRef.doc(ownerId).collection("feedItems").doc(postId).get().then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+  }
+
   likePost() {
     bool _isLiked = likes[currentUserId] == true;
     if (_isLiked) {
@@ -94,6 +115,7 @@ class _PostState extends State<Post> {
           .collection("usersPosts")
           .doc(postId)
           .update({'likes.$currentUserId': false});
+      removeLikeFromActivity();
       setState(() {
         postCount -= 1;
         isLiked = false;
@@ -105,6 +127,7 @@ class _PostState extends State<Post> {
           .collection("usersPosts")
           .doc(postId)
           .update({'likes.$currentUserId': true});
+      addLikeToActivityFeed();
       setState(() {
         postCount += 1;
         isLiked = true;
@@ -184,7 +207,8 @@ class _PostState extends State<Post> {
                     color: Colors.red[700],
                   ),
                 ),
-              ): Text(""),
+              )
+            : Text(""),
       ],
     );
   }
@@ -217,16 +241,11 @@ class _PostState extends State<Post> {
                       padding: EdgeInsets.only(left: 15.0),
                       child: Row(
                         children: <Widget>[
-                          isLiked
-                              ? Icon(
-                                  Icons.favorite,
-                                  size: 28.0,
-                                  color: Colors.red[700],
-                                )
-                              : Icon(
-                                  Icons.favorite_border,
-                                  size: 28.0,
-                                ),
+                          Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            size: 28.0,
+                            color: Colors.pink,
+                          ),
                           Padding(
                               padding: EdgeInsets.only(left: 5.0),
                               child: Text("Like")),
@@ -237,7 +256,8 @@ class _PostState extends State<Post> {
               new Expanded(
                   child: Container(
                 child: GestureDetector(
-                    onTap: () {},
+                    onTap: () => showComment(context,
+                        postId: postId, ownerId: ownerId, mediaUrl: mediaUrl),
                     child: Row(
                       children: <Widget>[
                         Icon(
@@ -279,6 +299,7 @@ class _PostState extends State<Post> {
 
   @override
   Widget build(BuildContext context) {
+    isLiked = likes[currentUserId] == true;
     return Container(
       child: Column(
         children: [
@@ -288,5 +309,13 @@ class _PostState extends State<Post> {
         ],
       ),
     );
+  }
+
+  showComment(context, {String postId, String ownerId, String mediaUrl}) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => Comments(
+                postId: postId, ownerId: ownerId, mediaUrl: mediaUrl)));
   }
 }

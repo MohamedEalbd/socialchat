@@ -20,16 +20,22 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  final String currentUserId = currentUSer?.id; // iam put question mark to avoid if the return value == null skipped بحطها علشان لو القيمه فاضيه ميوقفش البرنامج
+  final String currentUserId = currentUSer
+      ?.id; // iam put question mark to avoid if the return value == null skipped بحطها علشان لو القيمه فاضيه ميوقفش البرنامج
   String postView = "grid";
   bool isLoading = false;
   int postCount = 0;
   List<Post> posts = [];
+  bool isFollowing = false;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getProfilePost();
+    getFollowers();
+    getFollowing();
+    checkIsFollowing();
   }
 
   BuildCount(String name, String count) {
@@ -47,16 +53,92 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  buildButton() {
-    return Container(
-      padding: EdgeInsets.only(top: 10),
-      child: FlatButton(
-        onPressed: () => Navigator.push(
+  getFollowers() {}
+
+  getFollowing() {}
+
+  checkIsFollowing() {}
+
+  handleUnfollowUser() {
+    setState(() {
+      isFollowing = false;
+    });
+    followersRef
+        .doc(widget.profileId)
+        .collection('userfollowers')
+        .doc(currentUserId)
+        .get().then((doc) {
+          if(doc.exists){
+            doc.reference.delete();
+          }
+    });
+    followingRef
+        .doc(currentUserId)
+        .collection('userfollowers')
+        .doc(widget.profileId)
+        .get().then((doc) {
+      if(doc.exists){
+        doc.reference.delete();
+      }
+    });
+    feedRef.doc(widget.profileId).collection("feedItems").doc(currentUserId).set({
+      'type': 'follow',
+      "ownerId" : widget.profileId,
+      'username': currentUSer.username,
+      'userId': currentUSer.id,
+      'userProfileImg': currentUSer.photoUrl,
+      'timestamp': timestamp,
+    });
+  }
+
+  handleFollowUser() {
+    setState(() {
+      isFollowing = true;
+    });
+    followersRef
+        .doc(widget.profileId)
+        .collection('userfollowers')
+        .doc(currentUserId)
+        .set({});
+    followingRef
+        .doc(currentUserId)
+        .collection('userfollowers')
+        .doc(widget.profileId)
+        .set({});
+    feedRef.doc(widget.profileId).collection("feedItems").doc(currentUserId).set({
+      'type': 'follow',
+      "ownerId" : widget.profileId,
+      'username': currentUSer.username,
+      'userId': currentUSer.id,
+      'userProfileImg': currentUSer.photoUrl,
+      'timestamp': timestamp,
+    });
+  }
+
+  buildProfileButton() {
+    bool isProfileOwner = currentUserId == widget.profileId;
+    if (isProfileOwner) {
+      return buildButton(
+        text: "Edit Profile",
+        function: () => Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => EditProfile(
                       currentUserId: currentUserId,
                     ))),
+      );
+    } else if (isFollowing) {
+      return buildButton(text: "UnFollow", function: handleUnfollowUser);
+    } else if (!isFollowing) {
+      return buildButton(text: "Follow", function: handleFollowUser);
+    }
+  }
+
+  buildButton({String text, Function function}) {
+    return Container(
+      padding: EdgeInsets.only(top: 10),
+      child: FlatButton(
+        onPressed: function,
         child: Container(
           alignment: Alignment.center,
           width: 250,
@@ -66,7 +148,7 @@ class _ProfileState extends State<Profile> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            "Edit Profile",
+            text, //"Edit Profile",
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -107,7 +189,7 @@ class _ProfileState extends State<Profile> {
                                 BuildCount("Following", "0"),
                               ],
                             ),
-                            buildButton()
+                            buildProfileButton()
                           ],
                         ))
                   ],
@@ -201,9 +283,7 @@ class _ProfileState extends State<Profile> {
         children: gridTile,
       );
     } else if (postView == "list") {
-      return Column(
-          children: posts
-      );
+      return Column(children: posts);
     }
   }
 
