@@ -27,6 +27,8 @@ class _ProfileState extends State<Profile> {
   int postCount = 0;
   List<Post> posts = [];
   bool isFollowing = false;
+  int followsCount = 0 ;
+  int followingCount = 0;
 
   @override
   void initState() {
@@ -53,11 +55,30 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  getFollowers() {}
+  getFollowers() async{
+    QuerySnapshot snapshot =  await followersRef.doc(widget.profileId).collection("userfollowers").get();
+    setState(() {
+      followsCount = snapshot.docs.length;
+    });
+  }
 
-  getFollowing() {}
+  getFollowing() async {
+    QuerySnapshot snapshot =  await followingRef.doc(widget.profileId).collection("userfollowers").get();
+    setState(() {
+      followingCount = snapshot.docs.length;
+    });
+  }
 
-  checkIsFollowing() {}
+  checkIsFollowing() async {
+    DocumentSnapshot doc = await followersRef
+        .doc(widget.profileId)
+        .collection("userfollowers")
+        .doc(currentUserId)
+        .get();
+    setState(() {
+      isFollowing = doc.exists;
+    });
+  }
 
   handleUnfollowUser() {
     setState(() {
@@ -67,23 +88,29 @@ class _ProfileState extends State<Profile> {
         .doc(widget.profileId)
         .collection('userfollowers')
         .doc(currentUserId)
-        .get().then((doc) {
-          if(doc.exists){
-            doc.reference.delete();
-          }
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
     });
     followingRef
         .doc(currentUserId)
         .collection('userfollowers')
         .doc(widget.profileId)
-        .get().then((doc) {
-      if(doc.exists){
+        .get()
+        .then((doc) {
+      if (doc.exists) {
         doc.reference.delete();
       }
     });
-    feedRef.doc(widget.profileId).collection("feedItems").doc(currentUserId).set({
+    feedRef
+        .doc(widget.profileId)
+        .collection("feedItems")
+        .doc(currentUserId)
+        .set({
       'type': 'follow',
-      "ownerId" : widget.profileId,
+      "ownerId": widget.profileId,
       'username': currentUSer.username,
       'userId': currentUSer.id,
       'userProfileImg': currentUSer.photoUrl,
@@ -105,9 +132,13 @@ class _ProfileState extends State<Profile> {
         .collection('userfollowers')
         .doc(widget.profileId)
         .set({});
-    feedRef.doc(widget.profileId).collection("feedItems").doc(currentUserId).set({
+    feedRef
+        .doc(widget.profileId)
+        .collection("feedItems")
+        .doc(currentUserId)
+        .set({
       'type': 'follow',
-      "ownerId" : widget.profileId,
+      "ownerId": widget.profileId,
       'username': currentUSer.username,
       'userId': currentUSer.id,
       'userProfileImg': currentUSer.photoUrl,
@@ -185,8 +216,8 @@ class _ProfileState extends State<Profile> {
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 BuildCount("Posts", postCount.toString()),
-                                BuildCount("Followers", "0"),
-                                BuildCount("Following", "0"),
+                                BuildCount("Followers", followsCount.toString()),
+                                BuildCount("Following", followingCount.toString()),
                               ],
                             ),
                             buildProfileButton()
